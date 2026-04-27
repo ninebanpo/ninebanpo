@@ -6,13 +6,25 @@
 <title>NINE BANPO — 분양 도면 안내</title>
 <meta property="og:title" content="NINE BANPO 분양 도면 안내" />
 <meta property="og:description" content="래미안 트리니원 단지 내 상가 — 실시간 분양 도면" />
-<meta property="og:image" content="https://ytst123.github.io/ninebanpo/slide-01.png" />
-<meta property="og:url" content="https://ytst123.github.io/ninebanpo" />
+<meta property="og:image" content="https://ninebapo.github.io/ninebanpo/slide-01.png" />
+<meta property="og:url" content="https://ninebapo.github.io/ninebanpo" />
 <meta property="og:type" content="website" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root { --bg:#0e0e0e; --accent:#c9a96e; --accent2:#e8d5b0; --text-dim:rgba(255,255,255,0.38); --radius:10px; --nav-size:48px; }
   html,body { width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;touch-action:none;user-select:none;-webkit-user-select:none; }
+
+  #lock-screen { position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;transition:opacity .4s ease; }
+  #lock-screen.hidden { opacity:0;pointer-events:none; }
+  .lock-box { display:flex;flex-direction:column;align-items:center;gap:22px; }
+  .lock-title { font-size:20px;letter-spacing:.25em;color:var(--accent);font-weight:500; }
+  .lock-sub { font-size:12px;color:var(--text-dim);letter-spacing:.1em; }
+  .lock-input { background:rgba(255,255,255,.05);border:1px solid rgba(201,169,110,.3);border-radius:8px;padding:13px 20px;font-size:22px;color:#fff;text-align:center;letter-spacing:.5em;width:180px;outline:none;transition:border-color .2s; }
+  .lock-input:focus { border-color:var(--accent); }
+  .lock-btn { padding:11px 36px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0e0e0e;font-size:14px;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:opacity .2s; }
+  .lock-btn:hover { opacity:.85; }
+  .lock-error { font-size:12px;color:#e07070;letter-spacing:.05em;height:16px; }
+
   #viewer { position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden; }
   #slide-container { position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center; }
   .slide { position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;transition:transform .38s cubic-bezier(.22,.61,.36,1),opacity .38s ease;will-change:transform,opacity; }
@@ -52,6 +64,17 @@
 </style>
 </head>
 <body>
+
+<div id="lock-screen">
+  <div class="lock-box">
+    <div class="lock-title">NINE BANPO</div>
+    <div class="lock-sub">비밀번호를 입력하세요</div>
+    <input class="lock-input" id="pw-input" type="password" maxlength="10" placeholder="••••" />
+    <button class="lock-btn" onclick="checkPw()">확인</button>
+    <div class="lock-error" id="pw-error"></div>
+  </div>
+</div>
+
 <div id="loading"><div class="spinner"></div></div>
 <div id="hint">
   <div class="hint-box">
@@ -72,7 +95,27 @@
 </button>
 <div id="counter"></div>
 <button id="zoom-reset">확대 초기화 ✕</button>
+
 <script>
+function checkPw() {
+  const input = document.getElementById('pw-input').value;
+  if (input === '0202') {
+    const lock = document.getElementById('lock-screen');
+    lock.classList.add('hidden');
+    setTimeout(() => lock.style.display = 'none', 400);
+  } else {
+    const err = document.getElementById('pw-error');
+    err.textContent = '비밀번호가 올바르지 않습니다';
+    document.getElementById('pw-input').value = '';
+    setTimeout(() => err.textContent = '', 2000);
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('pw-input');
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') checkPw(); });
+  input.focus();
+});
+
 const SLIDES=['slide-01.png','slide-02.png','slide-03.png','slide-04.png','slide-05.png','slide-06.png','slide-07.png'];
 const SLIDE_RATIO=3/4;
 let current=0,scale=1,tx=0,ty=0,isZoomed=false;
