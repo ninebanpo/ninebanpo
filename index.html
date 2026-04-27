@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NINE BANPO — 분양 도면 안내</title>
+<meta property="og:title" content="NINE BANPO 분양 도면 안내" />
+<meta property="og:description" content="래미안 트리니원 단지 내 상가 — 실시간 분양 도면" />
+<meta property="og:image" content="https://ytst123.github.io/ninebanpo/slide-01.png" />
+<meta property="og:url" content="https://ytst123.github.io/ninebanpo" />
+<meta property="og:type" content="website" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --bg:#0e0e0e; --accent:#c9a96e; --accent2:#e8d5b0; --text-dim:rgba(255,255,255,0.38); --radius:10px; --nav-size:48px; }
+  html,body { width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;touch-action:none;user-select:none;-webkit-user-select:none; }
+  #viewer { position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden; }
+  #slide-container { position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center; }
+  .slide { position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;transition:transform .38s cubic-bezier(.22,.61,.36,1),opacity .38s ease;will-change:transform,opacity; }
+  .slide.prev   { transform:translateX(-100%);opacity:0;pointer-events:none; }
+  .slide.active { transform:translateX(0);opacity:1; }
+  .slide.next   { transform:translateX(100%);opacity:0;pointer-events:none; }
+  .slide.hidden { display:none; }
+  .slide-inner { position:relative;transform-origin:center center;cursor:grab; }
+  .slide-inner:active { cursor:grabbing; }
+  .slide-inner img { display:block;border-radius:var(--radius);box-shadow:0 24px 64px rgba(0,0,0,.7);pointer-events:none;-webkit-user-drag:none; }
+  #progress-bar { position:fixed;top:0;left:0;right:0;height:2px;background:rgba(255,255,255,.06);z-index:200; }
+  #progress-fill { height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .38s cubic-bezier(.22,.61,.36,1); }
+  .nav-btn { position:fixed;top:50%;transform:translateY(-50%);width:var(--nav-size);height:var(--nav-size);border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(14,14,14,.78);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:150;transition:all .2s ease;color:#fff;outline:none; }
+  .nav-btn svg { transition:transform .2s ease; }
+  .nav-btn:hover { background:rgba(201,169,110,.22);border-color:var(--accent); }
+  .nav-btn:hover svg { transform:scale(1.2); }
+  .nav-btn:active { transform:translateY(-50%) scale(.92); }
+  .nav-btn.disabled { opacity:.15;pointer-events:none; }
+  #btn-prev { left:14px; }
+  #btn-next { right:14px; }
+  @media(max-width:600px){ :root{--nav-size:38px} #btn-prev{left:6px} #btn-next{right:6px} }
+  #counter { position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;z-index:150; }
+  .dot { width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .28s ease;cursor:pointer;border:none;outline:none; }
+  .dot.active { background:var(--accent);transform:scale(1.6);box-shadow:0 0 8px rgba(201,169,110,.5); }
+  #slide-count { position:fixed;top:10px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text-dim);letter-spacing:.12em;z-index:150;white-space:nowrap; }
+  #zoom-reset { position:fixed;top:10px;right:14px;padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.6);backdrop-filter:blur(10px);color:var(--text-dim);font-size:11px;cursor:pointer;z-index:150;opacity:0;pointer-events:none;transition:opacity .25s ease;outline:none; }
+  #zoom-reset.visible { opacity:1;pointer-events:auto; }
+  #loading { position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:500;transition:opacity .4s ease; }
+  #loading.done { opacity:0;pointer-events:none; }
+  .spinner { width:28px;height:28px;border:2px solid rgba(255,255,255,.08);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  #hint { position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:400;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);pointer-events:none;opacity:0;animation:hintAnim 3.2s ease forwards;animation-delay:.7s; }
+  @keyframes hintAnim { 0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0} }
+  .hint-box { background:rgba(18,18,18,.92);border:1px solid rgba(201,169,110,.22);border-radius:16px;padding:26px 34px;display:flex;flex-direction:column;gap:14px; }
+  .hint-row { display:flex;align-items:center;gap:12px;font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.03em; }
+  .hint-icon { font-size:20px; }
+</style>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div></div>
+<div id="hint">
+  <div class="hint-box">
+    <div class="hint-row"><span class="hint-icon">👈👉</span>좌우 스와이프 또는 화살표로 이동</div>
+    <div class="hint-row"><span class="hint-icon">🤏</span>두 손가락 핀치로 확대 / 축소</div>
+    <div class="hint-row"><span class="hint-icon">☝️</span>확대 후 드래그로 이동</div>
+    <div class="hint-row"><span class="hint-icon">↩️</span>두 번 탭 / ESC 로 초기화</div>
+  </div>
+</div>
+<div id="viewer"><div id="slide-container"></div></div>
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="slide-count"></div>
+<button class="nav-btn" id="btn-prev" aria-label="이전">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 16L7 10L13 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+<button class="nav-btn" id="btn-next" aria-label="다음">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 4L13 10L7 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+<div id="counter"></div>
+<button id="zoom-reset">확대 초기화 ✕</button>
+<script>
+const SLIDES=['slide-01.png','slide-02.png','slide-03.png','slide-04.png','slide-05.png','slide-06.png','slide-07.png'];
+const SLIDE_RATIO=3/4;
+let current=0,scale=1,tx=0,ty=0,isZoomed=false;
+let pointers={},lastPinchDist=null,swipeStartX=null,swipeStartY=null,swipeActive=false;
+let dragOriginX=0,dragOriginY=0,dragStartTX=0,dragStartTY=0;
+const container=document.getElementById('slide-container'),dotsEl=document.getElementById('counter');
+const fillEl=document.getElementById('progress-fill'),countEl=document.getElementById('slide-count');
+const resetBtn=document.getElementById('zoom-reset'),btnPrev=document.getElementById('btn-prev'),btnNext=document.getElementById('btn-next');
+function getSize(){const vw=window.innerWidth*.90,vh=window.innerHeight*.90,wByH=vh*SLIDE_RATIO,hByW=vw/SLIDE_RATIO;return wByH<=vw?{w:Math.round(wByH),h:Math.round(vh)}:{w:Math.round(vw),h:Math.round(hByW)};}
+function buildSlides(){
+  container.innerHTML='';dotsEl.innerHTML='';
+  const{w,h}=getSize();
+  SLIDES.forEach((src,i)=>{
+    const slide=document.createElement('div');slide.className='slide '+(i===0?'active':i===1?'next':'hidden');slide.id=`slide-${i}`;
+    const inner=document.createElement('div');inner.className='slide-inner';inner.id=`inner-${i}`;inner.style.cssText=`width:${w}px;height:${h}px;`;
+    const img=document.createElement('img');img.src=src;img.alt=`슬라이드 ${i+1}`;img.style.cssText=`width:${w}px;height:${h}px;`;
+    if(i===0) img.onload=()=>document.getElementById('loading').classList.add('done');
+    inner.appendChild(img);slide.appendChild(inner);container.appendChild(slide);
+    const d=document.createElement('button');d.className='dot'+(i===0?' active':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);
+  });
+  updateUI();setTimeout(()=>document.getElementById('loading').classList.add('done'),2000);
+}
+function goTo(idx){
+  if(idx<0||idx>=SLIDES.length)return;resetZoom(false);
+  container.querySelectorAll('.slide').forEach((s,i)=>{s.className='slide';if(i===idx-1){s.classList.add('prev');s.style.display='';}else if(i===idx){s.classList.add('active');s.style.display='';}else if(i===idx+1){s.classList.add('next');s.style.display='';}else{s.classList.add('hidden');s.style.display='none';}});
+  current=idx;updateUI();
+}
+function navigate(d){if(!isZoomed)goTo(current+d);}
+function updateUI(){fillEl.style.width=((current+1)/SLIDES.length*100)+'%';countEl.textContent=`${current+1} / ${SLIDES.length}`;dotsEl.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===current));btnPrev.classList.toggle('disabled',current===0);btnNext.classList.toggle('disabled',current===SLIDES.length-1);}
+btnPrev.onclick=()=>navigate(-1);btnNext.onclick=()=>navigate(1);
+function applyTransform(anim){const inner=document.getElementById(`inner-${current}`);if(!inner)return;inner.style.transition=anim?'transform .22s ease':'none';inner.style.transform=`scale(${scale}) translate(${tx/scale}px,${ty/scale}px)`;isZoomed=scale>1.01;resetBtn.classList.toggle('visible',isZoomed);}
+function resetZoom(anim=true){scale=1;tx=0;ty=0;isZoomed=false;applyTransform(anim);resetBtn.classList.remove('visible');}
+resetBtn.onclick=()=>resetZoom();
+function clamp(){const inner=document.getElementById(`inner-${current}`);if(!inner)return;const mx=(inner.offsetWidth*(scale-1))/2,my=(inner.offsetHeight*(scale-1))/2;tx=Math.max(-mx,Math.min(mx,tx));ty=Math.max(-my,Math.min(my,ty));}
+function plist(){return Object.values(pointers);}
+function pdist(p){const dx=p[0].clientX-p[1].clientX,dy=p[0].clientY-p[1].clientY;return Math.sqrt(dx*dx+dy*dy);}
+document.addEventListener('pointerdown',e=>{pointers[e.pointerId]=e;const p=plist();if(p.length===1){swipeStartX=e.clientX;swipeStartY=e.clientY;swipeActive=true;dragOriginX=e.clientX;dragOriginY=e.clientY;dragStartTX=tx;dragStartTY=ty;}if(p.length===2){swipeActive=false;lastPinchDist=pdist(p);dragOriginX=(p[0].clientX+p[1].clientX)/2;dragOriginY=(p[0].clientY+p[1].clientY)/2;dragStartTX=tx;dragStartTY=ty;}},{passive:false});
+document.addEventListener('pointermove',e=>{pointers[e.pointerId]=e;const p=plist();if(p.length===2){const d=pdist(p);scale=Math.min(6,Math.max(1,scale*(d/lastPinchDist)));lastPinchDist=d;const cx=(p[0].clientX+p[1].clientX)/2,cy=(p[0].clientY+p[1].clientY)/2;tx=dragStartTX+(cx-dragOriginX);ty=dragStartTY+(cy-dragOriginY);dragOriginX=cx;dragOriginY=cy;dragStartTX=tx;dragStartTY=ty;clamp();applyTransform(false);swipeActive=false;}else if(p.length===1&&isZoomed){tx=dragStartTX+(e.clientX-dragOriginX);ty=dragStartTY+(e.clientY-dragOriginY);clamp();applyTransform(false);}},{passive:false});
+document.addEventListener('pointerup',e=>{const p=plist();if(p.length===1&&swipeActive&&!isZoomed){const dx=e.clientX-swipeStartX,dy=e.clientY-swipeStartY;if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.4)navigate(dx<0?1:-1);}delete pointers[e.pointerId];if(plist().length<2)lastPinchDist=null;if(plist().length===0)swipeActive=false;});
+document.addEventListener('pointercancel',e=>{delete pointers[e.pointerId];});
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')navigate(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')navigate(-1);if(e.key==='Escape')resetZoom();});
+document.addEventListener('wheel',e=>{e.preventDefault();scale=Math.min(6,Math.max(1,scale*(e.deltaY<0?1.1:.91)));clamp();applyTransform(false);if(scale<=1.01)resetZoom(true);},{passive:false});
+let lastTap=0;document.addEventListener('pointerdown',e=>{if(Date.now()-lastTap<280)resetZoom();lastTap=Date.now();});
+let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(buildSlides,150);});
+buildSlides();
+</script>
+</body>
+</html>
